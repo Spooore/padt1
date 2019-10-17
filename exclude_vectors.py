@@ -181,8 +181,10 @@ def main_procesing_corpus(korpus: str, size : int):
     from gensim.scripts.glove2word2vec import glove2word2vec
     from gensim.models import Word2Vec
     from gensim.models import KeyedVectors
-    
-    
+    import nltk 
+    from nltk.corpus import stopwords
+    import re
+    from glove import Corpus, Glove
     # glove_6b = r"C:\Users\tymon.czarnota\Desktop\PADT1\glove.6B\glove.6B.100d.txt"
     # word2vec_output_file = r'C:\Users\tymon.czarnota\Desktop\PADT1\glove.6B\glove.6B.100d.txt.word2vec'
     # glove2word2vec(glove_6b, word2vec_output_file)
@@ -192,16 +194,20 @@ def main_procesing_corpus(korpus: str, size : int):
     path_raw = r"C:\Users\tymon.czarnota\Desktop\PADT1\RawData\{}".format(korpus)
     file_number = max([ int(re.findall(r'\d+', name)[0]) for name in os.listdir(path_raw)])
     people_vect_dict= {}
+    my_corpus = []
     for i in range(1,file_number):
         try:
             pathFile = path_raw + r"\doc{}".format(i)
             l = stringify(pathFile)
+            l= ''.join(c for c in l if c not in punctuation)
+            l= ''.join(c for c in l if c not in words_with_dot)
             v = exclude_vectors_nsize(l,size)
             if v == []:
                 continue
             if v[0][-1] not in people_vect_dict:
                 people_vect_dict[v[0][-1]] = []
             people_vect_dict[v[0][-1]].append(v[0][0])
+            my_corpus.append(v[0][0])
         except FileNotFoundError:
             continue
         
@@ -210,10 +216,14 @@ def main_procesing_corpus(korpus: str, size : int):
     #     line.split()[0].decode('utf-8'): np.array(line.split()[1:], 
     #                                                      dtype=np.float32)
     #                                                      for line in lines}
+    corpus = Corpus()
+    corpus.fit(my_corpus, window=10)
     
-    for key in people_vect_dict:
-        em_model = Word2Vec(people_vect_dict[key], size=100, window=2*size, min_count=1, workers=2)
-        word_vectors = em_model.wv
-        print(word_vectors)
+    glove = Glove(no_components=5, learning_rate=0.05)
+    glove.fit(corpus.matrix, epochs=30, no_threads=4, verbose=True)
+    glove.add_dictionary(corpus.dictionary)
+    glove.save('glove.model')
     
 main_procesing_corpus("korpusGAZETA",3)
+main_procesing_corpus("korpusGAZETA",4)
+main_procesing_corpus("korpusGAZETA",5)
