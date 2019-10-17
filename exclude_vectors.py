@@ -171,7 +171,7 @@ words_with_dot = ['m.in.', 'inż.', 'prof.', 'tzn.', 'np.', 'cd.', 'al.', 'cnd.'
                   'itp.', 'itd.', 'lek.', 'lic.', 'pl.', 'p.o.', 'św.', 'tj.', 
                   'tzw.', 'ul.', 'zob.', 'ul.']
 
-punctuation = ['"', ',', '.', ':', '(', ')', '?', '!']
+punctuation = ['.', ':', '(', ')', '?', '!']
 
 def main_procesing_corpus(korpus: str, size : int):
     import os, os.path
@@ -185,6 +185,7 @@ def main_procesing_corpus(korpus: str, size : int):
     from nltk.corpus import stopwords
     import re
     from glove import Corpus, Glove
+    import numpy
     # glove_6b = r"C:\Users\tymon.czarnota\Desktop\PADT1\glove.6B\glove.6B.100d.txt"
     # word2vec_output_file = r'C:\Users\tymon.czarnota\Desktop\PADT1\glove.6B\glove.6B.100d.txt.word2vec'
     # glove2word2vec(glove_6b, word2vec_output_file)
@@ -210,7 +211,8 @@ def main_procesing_corpus(korpus: str, size : int):
             my_corpus.append(v[0][0])
         except FileNotFoundError:
             continue
-        
+    
+    print(people_vect_dict)
     # with open(glove_6b, "rb") as lines:
     #  wvec = {
     #     line.split()[0].decode('utf-8'): np.array(line.split()[1:], 
@@ -219,10 +221,18 @@ def main_procesing_corpus(korpus: str, size : int):
     corpus = Corpus()
     corpus.fit(my_corpus, window=10)
     
-    glove = Glove(no_components=5, learning_rate=0.05)
+    glove = Glove(no_components=100, learning_rate=0.05)
     glove.fit(corpus.matrix, epochs=30, no_threads=4, verbose=True)
     glove.add_dictionary(corpus.dictionary)
     glove.save('glove.model')
+
+    
+    for key in people_vect_dict:
+        print("@@@@" + str(key) + "@@@@")
+        for l in people_vect_dict[key]:
+            for w in l:
+                print(w)
+                print (glove.word_vectors[glove.dictionary[w]])
     
 main_procesing_corpus("korpusGAZETA",3)
 main_procesing_corpus("korpusGAZETA",4)
